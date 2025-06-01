@@ -1,5 +1,7 @@
 const express = require("express");
 const app = express();
+const fs = require("fs");
+
 
 const connectToDatabase = require("./database");
 const Book = require("./model/bookModel");
@@ -21,6 +23,13 @@ app.get("/", (req, res) => {
 });
 //  Create a book
 app.post("/book",upload.single('image'),async (req, res) => {
+  let fileName ;
+  if(!req.file){
+    fileName =
+      "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740";
+  }else{
+     fileName = "https://localhost:3000/" + req.file.fieldname;
+  }
   const {
     bookName,
     bookPrice,
@@ -37,6 +46,7 @@ app.post("/book",upload.single('image'),async (req, res) => {
     authorName,
     publishedAt,
     publication,
+    imageUrl : fileName
   });
   res.status(201).json({
     message: "Book created sucessfully",
@@ -72,8 +82,12 @@ app.delete("/book/:id", async (req, res) => {
   });
 });
 
-//update operation
-app.patch("/book/:id", async (req ,res)=>{
+
+
+
+
+// update operation
+app.patch("/book/:id",upload.single('image'), async (req ,res)=>{
     const id = req.params.id //kun book update garne id ho yo
     const {
       bookName,
@@ -82,7 +96,27 @@ app.patch("/book/:id", async (req ,res)=>{
       authorName,
       publishedAt,
       publication,
-    } = req.body;
+    } = req.body || {};
+    // updateing image
+    const oldDatas = await Book.findById(id) 
+     let fileName = oldDatas.imageUrl;
+    if(req.file){
+
+       const oldImagePath = oldDatas.imageUrl
+      console.log(oldImagePath)      //this image path stores local host url
+      const localHostUrlLength = "http://localhost:3000/".length
+      const newOldImagePath = oldImagePath.slice(localHostUrlLength) //slicing localhost url
+      console.log(newOldImagePath) //only the image name
+      fs.unlink(`storage/${newOldImagePath}`,(err)=>{
+        if(err){
+          console.log(err)
+        }else{
+          console.log("File Deleted Sucessfully")
+        }
+      })
+      fileName = "http://localhost:3000/" + req.file.filename
+     }
+    // 
     await Book.findByIdAndUpdate(id, {
       bookName : bookName,
       bookPrice : bookPrice,
@@ -90,11 +124,14 @@ app.patch("/book/:id", async (req ,res)=>{
       authorName : authorName,
       publishedAt : publishedAt,
       publication : publication,
+      imageUrl: fileName
     });
     res.status(200).json({
         message : "Book updated Sucessfully"
     })
 })
+// billion dollar mistake if there is ./ (whole website can be hacked easily)
+app.use(express.static("./storage/")) //koi manxe le root bata storage vitra ko kura read garna diney
 
 app.listen(3000, () => {
   console.log("Node js server has stated at port 3000");
