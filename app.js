@@ -17,7 +17,7 @@ const upload = multer({ storage: storage });
 const cors = require('cors')
 
 app.use(cors({
-  origin: '*',
+  origin: "*"
   // origin:'http://127.0.0.1:5173' - if you want to give data access only specific port number
 }))
 
@@ -67,6 +67,20 @@ app.get("/book", async (req, res) => {
     data: books,
   });
 });
+
+// Get a single book
+app.get("/book/:id", async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+    res.status(200).json({ message: "Book fetched successfully", data: book });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching book", error });
+  }
+});
+
 
  // update operation
 app.patch("/book/:id",upload.single('image'), async (req ,res)=>{
