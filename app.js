@@ -17,7 +17,7 @@ const upload = multer({ storage: storage });
 const cors = require('cors')
 
 app.use(cors({
-  origin: '*'
+  origin: '*',
   // origin:'http://127.0.0.1:5173' - if you want to give data access only specific port number
 }))
 
