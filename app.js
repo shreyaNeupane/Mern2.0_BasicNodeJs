@@ -81,6 +81,35 @@ app.get("/book/:id", async (req, res) => {
   }
 });
 
+// Delete a book
+app.delete("/book/:id", async (req, res) => {
+  const id = req.params.id;
+  const book = await Book.findById(id);
+  
+  if (!book) {
+    return res.status(404).json({ message: "Book not found" });
+  }
+
+  // Delete image from storage if it's a localhost image
+  if (book.imageUrl && book.imageUrl.includes("localhost")) {
+    const localHostUrlLength = "http://localhost:3000/".length;
+    const imagePath = book.imageUrl.slice(localHostUrlLength);
+
+    fs.unlink(`storage/${imagePath}`, (err) => {
+      if (err) {
+        console.log("Error deleting image:", err);
+      } else {
+        console.log("Image deleted");
+      }
+    });
+  }
+
+  await Book.findByIdAndDelete(id);
+
+  res.status(200).json({ message: "Book deleted successfully" });
+});
+
+
 
  // update operation
 app.patch("/book/:id",upload.single('image'), async (req ,res)=>{
